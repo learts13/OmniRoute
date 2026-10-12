@@ -22,12 +22,6 @@ jobs:
           ref: c1e30b7676975feb298b49eff6ff58923c04b89e
           path: source
 
-      - name: Aumentar heap do Node no build
-        run: |
-          grep -qE '^FROM .* AS builder' source/Dockerfile
-          sed -i '/^FROM .* AS builder/a ENV NODE_OPTIONS=--max-old-space-size=8192' source/Dockerfile
-          grep -n 'NODE_OPTIONS' source/Dockerfile
-
       - name: Configurar Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -45,5 +39,7 @@ jobs:
           file: ./source/Dockerfile
           target: runner-base
           platforms: linux/amd64
+          build-args: |
+            OMNIROUTE_BUILD_MEMORY_MB=8192
           push: true
           tags: ghcr.io/learts13/omniroute:3.8.51
