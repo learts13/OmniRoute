@@ -1,4 +1,4 @@
-name: Build OmniRoute 3.8.52
+name: Build OmniRoute ARM64
 
 on:
   workflow_dispatch:
@@ -7,32 +7,26 @@ permissions:
   contents: read
   packages: write
 
+env:
+  VERSION: "3.8.52"
+
 jobs:
   build:
-    name: Build ${{ matrix.arch }}
-    runs-on: ${{ matrix.runner }}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - arch: amd64
-            runner: ubuntu-latest
-            platform: linux/amd64
-          - arch: arm64
-            runner: ubuntu-24.04-arm
-            platform: linux/arm64
+    name: Construir e publicar ARM64
+    runs-on: ubuntu-24.04-arm
 
     steps:
-      - name: Checkout do fork
-        uses: actions/checkout@v4
-
-      - name: Baixar o código oficial da v3.8.52
+      - name: Baixar código oficial
         uses: actions/checkout@v4
         with:
           repository: cheaper-inference/OmniRoute
-          ref: v3.8.52
-          path: source
+          ref: v${{ env.VERSION }}
+          persist-credentials: false
+
+      - name: Conferir versão do código
+        run: |
+          actual=$(node -p "require('./package.json').version")
+          test "$actual" = "$VERSION"
 
       - name: Configurar Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -44,39 +38,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Construir e publicar imagem ${{ matrix.arch }}
+      - name: Construir e publicar imagem ARM64
         uses: docker/build-push-action@v6
         with:
-          context: ./source
-          file: ./source/Dockerfile
+          context: .
+          file: ./Dockerfile
           target: runner-base
-          platforms: ${{ matrix.platform }}
+          platforms: linux/arm64
           build-args: |
             OMNIROUTE_BUILD_MEMORY_MB=8192
             OMNIROUTE_BUILD_WORKERS=2
           push: true
-          tags: ghcr.io/learts13/omniroute:3.8.52-${{ matrix.arch }}
+          tags: |
+            ghcr.io/learts13/omniroute:${{ env.VERSION }}
+            ghcr.io/learts13/omniroute:${{ env.VERSION }}-arm64
 
-  publish-multiarch:
-    name: Publicar tag multiarch 3.8.52
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-      - name: Configurar Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Entrar no GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Criar tag multiarch 3.8.52
+      - name: Conferir imagem publicada
         run: |
-          docker buildx imagetools create \
-            --tag ghcr.io/learts13/omniroute:3.8.52 \
-            ghcr.io/learts13/omniroute:3.8.52-amd64 \
-            ghcr.io/learts13/omniroute:3.8.52-arm64
-
+          docker buildx imagetools inspect \
+            "ghcr.io/learts13/omniroute:${VERSION}"
