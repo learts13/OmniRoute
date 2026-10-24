@@ -79,3 +79,4 @@ jobs:
             --tag ghcr.io/learts13/omniroute:3.8.52 \
             ghcr.io/learts13/omniroute:3.8.52-amd64 \
             ghcr.io/learts13/omniroute:3.8.52-arm64
+
