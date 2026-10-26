@@ -78,7 +78,7 @@ jobs:
 
   a11y:
     name: A11y axe (nightly, freeze-and-alert)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # The Playwright webServer (`start` mode) builds Next via build-next-isolated.mjs and
     # boots the standalone server itself (waits on /api/monitoring/health, 15min webServer
     # timeout). Unlike the per-PR test-e2e job, this nightly job has no pre-built artifact,
