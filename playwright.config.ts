@@ -57,6 +57,8 @@ export default defineConfig({
     command: `${JSON.stringify(process.execPath)} scripts/dev/run-next-playwright.mjs ${playwrightServerMode}`,
     url: webServerReadyUrl,
     reuseExistingServer: !process.env.CI,
+    // The production build runs inside this server process; show its progress in CI.
+    stdout: process.env.CI ? "pipe" : "ignore",
     timeout: Number.isFinite(playwrightWebServerTimeout) ? playwrightWebServerTimeout : 900_000,
   },
 });
